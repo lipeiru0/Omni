@@ -1,16 +1,18 @@
-# lucky123.cc.cd 接入 TokenPortal
+# lucky123.cc.cd 前端接入自定义 API 域名
 
 ## 两个地址的职责
 
-- `https://lucky123.cc.cd`：你的前端站点、浏览器 Origin 和 OAuth 回跳基址。
-- `https://api.taotoken.io`：TokenPortal 后端 API。浏览器不直接跨域调用，而是请求本站的 `/tokenportal-api/*`，由 Nginx 转发。
+- `https://lucky123.cc.cd`：前端站点、浏览器 Origin 和 OAuth 回跳基址。
+- `https://api.lucky123.cc.cd`：前端唯一使用的 API 地址，由现有 Worker 转发到 TokenPortal。
 
 请求链路：
 
 ```text
-浏览器 https://lucky123.cc.cd/tokenportal-api/api/v1/auth/login
-  -> Nginx
+前端 https://lucky123.cc.cd
+  -> fetch https://api.lucky123.cc.cd/api/v1/auth/login
+  -> tokenportal-proxy Worker
   -> https://api.taotoken.io/api/v1/auth/login
+  -> TokenPortal
 ```
 
 ## 部署前必须补齐的两个值
@@ -29,7 +31,7 @@ npm ci
 npm run build
 ```
 
-将 `dist/` 内容部署到服务器 `/var/www/omnimind`，把 `nginx.conf.example` 中的站点配置加入 Nginx，配置 HTTPS 证书后重载 Nginx。
+将 `dist/` 内容部署到服务器 `/var/www/omnimind`，把 `nginx.conf.example` 中的静态站点配置加入 Nginx，配置 HTTPS 证书后重载 Nginx。前端 Nginx 不承担 API 反向代理。
 
 ## OAuth 回跳
 
@@ -39,4 +41,4 @@ npm run build
 https://lucky123.cc.cd/auth/oauth-callback?code=一次性code
 ```
 
-Nginx 的 SPA fallback 会把该路径交给 Vue；前端随后通过同源代理调用 `/api/v1/oauth/exchange` 换取正式令牌。
+Nginx 的 SPA fallback 会把该路径交给 Vue；前端随后调用 `https://api.lucky123.cc.cd/api/v1/oauth/exchange` 换取正式令牌。

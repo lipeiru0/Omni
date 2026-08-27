@@ -14,7 +14,7 @@ import type {
 } from '@/types/auth'
 
 const oauthBaseURL =
-  import.meta.env.VITE_TOKENPORTAL_OAUTH_BASE_URL?.trim() || 'https://api.taotoken.io'
+  import.meta.env.VITE_TOKENPORTAL_OAUTH_BASE_URL?.trim() || 'https://api.lucky123.cc.cd'
 const oauthAppId = import.meta.env.VITE_TOKENPORTAL_APP_ID?.trim()
 
 export async function login(payload: LoginRequest): Promise<AuthTokens> {
