@@ -1,0 +1,43 @@
+# OmniMind 部署到 https://lucky123.cc.cd 的示例。
+# 先把 dist 上传到 /var/www/omnimind，并替换证书路径。
+
+server {
+    listen 80;
+    server_name lucky123.cc.cd;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name lucky123.cc.cd;
+
+    ssl_certificate     /etc/letsencrypt/live/lucky123.cc.cd/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/lucky123.cc.cd/privkey.pem;
+
+    root /var/www/omnimind;
+    index index.html;
+
+    # 浏览器只访问 lucky123.cc.cd/tokenportal-api/...，由 Nginx 转发至真实后端。
+    # 尾部 / 会去掉 tokenportal-api 前缀：
+    # /tokenportal-api/api/v1/auth/login -> https://api.taotoken.io/api/v1/auth/login
+    location /tokenportal-api/ {
+        proxy_pass https://api.taotoken.io/;
+        proxy_ssl_server_name on;
+        proxy_ssl_name api.taotoken.io;
+
+        proxy_set_header Host api.taotoken.io;
+        proxy_set_header Origin $http_origin;
+        proxy_set_header X-App-Key $http_x_app_key;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+    }
+
+    # Vue Router history 模式及 OAuth 回跳页都需要 SPA fallback。
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

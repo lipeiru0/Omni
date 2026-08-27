@@ -1,0 +1,22 @@
+:root {
+  --om-primary: #5957e8;
+  --om-primary-dark: #4341cc;
+  --om-primary-soft: #eeedff;
+  --om-ink: #17182d;
+  --om-muted: #6e7186;
+  --om-border: #e5e6ee;
+  --om-surface: #ffffff;
+  --om-background: #f5f6fa;
+  --om-radius-lg: 24px;
+  --om-shadow: 0 24px 70px rgb(32 35 80 / 12%);
+
+  --el-color-primary: var(--om-primary);
+  --el-color-primary-light-3: #7b79ed;
+  --el-color-primary-light-5: #9c9af2;
+  --el-color-primary-light-7: #bebcf7;
+  --el-color-primary-light-8: #d3d2fa;
+  --el-color-primary-light-9: var(--om-primary-soft);
+  --el-color-primary-dark-2: var(--om-primary-dark);
+  --el-border-radius-base: 10px;
+  --el-font-family: Inter, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
