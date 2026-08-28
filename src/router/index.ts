@@ -26,6 +26,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/workspace/verification',
+      name: 'workspace-verification',
+      component: () => import('@/views/WorkspaceVerification/index.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/Login/index.vue'),

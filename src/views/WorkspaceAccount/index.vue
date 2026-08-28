@@ -578,7 +578,7 @@ onBeforeUnmount(() => {
         <div class="nav-divider"></div>
         <p class="nav-heading">账号</p>
         <RouterLink class="side-item active" to="/workspace/account"><span>◎</span>账户</RouterLink>
-        <button type="button" class="side-item"><span>♢</span>实名认证</button>
+        <RouterLink class="side-item" to="/workspace/verification"><span>♢</span>实名认证</RouterLink>
         <button type="button" class="side-item"><span>♧</span>通知</button>
         <div class="nav-divider"></div>
         <p class="nav-heading">供应商</p>
