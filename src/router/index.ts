@@ -15,6 +15,17 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: () => import('@/views/Home/index.vue') },
     {
+      path: '/workspace',
+      redirect: { name: 'workspace-account' },
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/workspace/account',
+      name: 'workspace-account',
+      component: () => import('@/views/WorkspaceAccount/index.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/Login/index.vue'),

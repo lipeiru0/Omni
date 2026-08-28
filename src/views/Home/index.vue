@@ -73,7 +73,7 @@ const models = [
           <div class="hero-actions">
             <RouterLink
               class="primary-button"
-              :to="authStore.isAuthenticated ? '/change-password' : '/register'"
+              :to="authStore.isAuthenticated ? '/workspace/account' : '/register'"
               >{{ authStore.isAuthenticated ? '进入工作台' : '免费开始' }}
               <span>→</span></RouterLink
             ><a class="secondary-button" href="#models">浏览模型</a>

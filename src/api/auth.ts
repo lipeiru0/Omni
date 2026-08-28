@@ -75,3 +75,11 @@ export async function getCurrentUser(includeRoles = false): Promise<User> {
     effectiveTimezone: data.effective_timezone,
   }
 }
+
+export async function sendEmailVerification(): Promise<void> {
+  await apiClient.post('/api/v1/auth/verify-email/send')
+}
+
+export async function confirmEmailVerification(code: string): Promise<void> {
+  await apiClient.post('/api/v1/auth/verify-email/confirm', { code })
+}
