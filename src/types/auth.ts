@@ -31,6 +31,11 @@ export interface CurrentUserResponse {
   effective_timezone?: string | null
 }
 
+export interface UpdateCurrentUserRequest {
+  name?: string
+  timezone?: string
+}
+
 export interface LoginRequest {
   email: string
   password: string

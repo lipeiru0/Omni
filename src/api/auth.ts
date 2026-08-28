@@ -16,6 +16,7 @@ import type {
   TwoFactorEnableResponse,
   TwoFactorSetup,
   TwoFactorStatus,
+  UpdateCurrentUserRequest,
   User,
 } from '@/types/auth'
 
@@ -60,10 +61,7 @@ export async function setPassword(payload: SetPasswordRequest): Promise<void> {
   await apiClient.post('/api/v1/auth/set-password', payload)
 }
 
-export async function getCurrentUser(includeRoles = false): Promise<User> {
-  const { data } = await apiClient.get<CurrentUserResponse>('/api/v1/auth/me', {
-    params: includeRoles ? { include: 'roles' } : undefined,
-  })
+function mapCurrentUser(data: CurrentUserResponse): User {
   return {
     id: data.id,
     email: data.email,
@@ -80,6 +78,18 @@ export async function getCurrentUser(includeRoles = false): Promise<User> {
     timezone: data.timezone,
     effectiveTimezone: data.effective_timezone,
   }
+}
+
+export async function getCurrentUser(includeRoles = false): Promise<User> {
+  const { data } = await apiClient.get<CurrentUserResponse>('/api/v1/auth/me', {
+    params: includeRoles ? { include: 'roles' } : undefined,
+  })
+  return mapCurrentUser(data)
+}
+
+export async function updateCurrentUser(payload: UpdateCurrentUserRequest): Promise<User> {
+  const { data } = await apiClient.patch<CurrentUserResponse>('/api/v1/auth/me', payload)
+  return mapCurrentUser(data)
 }
 
 export async function sendEmailVerification(): Promise<void> {
@@ -125,4 +135,8 @@ export async function requestAccountDeletion(): Promise<AccountDeletionResponse>
 
 export async function cancelAccountDeletion(): Promise<void> {
   await apiClient.post('/api/v1/auth/delete-account/cancel')
+}
+
+export async function revokeSession(refreshToken?: string): Promise<void> {
+  await apiClient.post('/api/v1/auth/logout', refreshToken ? { refresh_token: refreshToken } : {})
 }

@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 
+import { revokeSession } from '@/api/auth'
 import type { AuthTokens, User } from '@/types/auth'
 import { authStorage } from '@/utils/auth'
 
@@ -39,6 +40,20 @@ export const useAuthStore = defineStore('auth', () => {
     authStorage.clear()
   }
 
+  async function logoutFromServer(): Promise<boolean> {
+    const currentRefreshToken = refreshToken.value
+    let revoked = false
+    try {
+      await revokeSession(currentRefreshToken || undefined)
+      revoked = true
+    } catch {
+      // 客户端退出不能依赖网络或 Redis 状态；接口失败时仍须清除本地令牌。
+    } finally {
+      logout()
+    }
+    return revoked
+  }
+
   return {
     user,
     accessToken,
@@ -49,5 +64,6 @@ export const useAuthStore = defineStore('auth', () => {
     setSession,
     syncTokens,
     logout,
+    logoutFromServer,
   }
 })
