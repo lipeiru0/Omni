@@ -39,12 +39,14 @@ const router = createRouter({
     },
     {
       path: '/forgot-password',
+      alias: '/auth/forgot-password',
       name: 'forgot-password',
       component: () => import('@/views/ForgotPassword/index.vue'),
       meta: { publicOnly: true },
     },
     {
       path: '/reset-password',
+      alias: '/auth/reset-password',
       name: 'reset-password',
       component: () => import('@/views/ResetPassword/index.vue'),
     },
