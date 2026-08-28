@@ -1,15 +1,21 @@
 import { apiClient, requestTokenRefresh } from './client'
 
 import type {
+  AccountDeletionResponse,
   AuthTokens,
   CurrentUserResponse,
   ForgotPasswordRequest,
   LoginRequest,
   OAuthExchangeRequest,
+  OAuthAccount,
   OAuthProvider,
   RegisterRequest,
   ResetPasswordRequest,
   SetPasswordRequest,
+  TwoFactorDisableRequest,
+  TwoFactorEnableResponse,
+  TwoFactorSetup,
+  TwoFactorStatus,
   User,
 } from '@/types/auth'
 
@@ -82,4 +88,41 @@ export async function sendEmailVerification(): Promise<void> {
 
 export async function confirmEmailVerification(code: string): Promise<void> {
   await apiClient.post('/api/v1/auth/verify-email/confirm', { code })
+}
+
+export async function getOAuthAccounts(): Promise<OAuthAccount[]> {
+  const { data } = await apiClient.get<OAuthAccount[]>('/api/v1/auth/me/oauth-accounts')
+  return data
+}
+
+export async function getTwoFactorStatus(): Promise<TwoFactorStatus> {
+  const { data } = await apiClient.get<TwoFactorStatus>('/api/v1/auth/2fa/status')
+  return data
+}
+
+export async function setupTwoFactor(): Promise<TwoFactorSetup> {
+  const { data } = await apiClient.post<TwoFactorSetup>('/api/v1/auth/2fa/setup')
+  return data
+}
+
+export async function enableTwoFactor(code: string): Promise<TwoFactorEnableResponse> {
+  const { data } = await apiClient.post<TwoFactorEnableResponse>('/api/v1/auth/2fa/enable', {
+    code,
+  })
+  return data
+}
+
+export async function disableTwoFactor(payload: TwoFactorDisableRequest): Promise<void> {
+  await apiClient.post('/api/v1/auth/2fa/disable', payload)
+}
+
+export async function requestAccountDeletion(): Promise<AccountDeletionResponse> {
+  const { data } = await apiClient.post<AccountDeletionResponse>('/api/v1/auth/delete-account', {
+    confirmation: 'DELETE',
+  })
+  return data
+}
+
+export async function cancelAccountDeletion(): Promise<void> {
+  await apiClient.post('/api/v1/auth/delete-account/cancel')
 }

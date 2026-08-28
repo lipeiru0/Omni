@@ -68,3 +68,33 @@ export type OAuthProvider = 'github' | 'google'
 export interface OAuthExchangeRequest {
   code: string
 }
+
+export interface OAuthAccount {
+  provider: string
+  email: string
+  created_at: string
+}
+
+export interface TwoFactorStatus {
+  enabled: boolean
+}
+
+export interface TwoFactorSetup {
+  secret: string
+  provisioning_uri: string
+}
+
+export interface TwoFactorEnableResponse {
+  backup_codes: string[]
+}
+
+export interface TwoFactorDisableRequest {
+  password: string
+  code: string
+}
+
+export interface AccountDeletionResponse {
+  status: string
+  deletion_scheduled_at: string
+  detail: string
+}
