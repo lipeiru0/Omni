@@ -278,153 +278,284 @@ onBeforeUnmount(() => {
     </aside>
 
     <main class="workspace-main" :class="{ loading }">
-      <div class="breadcrumb">工作台 <span>›</span></div>
-      <h1>实名认证</h1>
+      <div class="breadcrumb">
+        <RouterLink to="/workspace">工作台</RouterLink><span>/</span>身份中心
+      </div>
 
-      <section class="content-card status-card" :class="`status-${certification.status}`">
-        <div>
-          <h2>认证状态</h2>
-          <span class="status-value"><i></i>{{ loading ? '读取中…' : statusMeta.label }}</span>
-          <p>{{ statusMeta.note }}</p>
+      <section class="identity-hero" :class="`status-${certification.status}`">
+        <div class="hero-copy">
+          <span class="eyebrow">IDENTITY CENTER</span>
+          <h1>让身份成为<br /><em>你的信任凭证</em></h1>
+          <p>一次认证，安全解锁更多平台能力。你的敏感信息将被加密存储。</p>
+          <div class="hero-status">
+            <span class="status-dot"></span>
+            <div>
+              <small>当前状态</small>
+              <strong>{{ loading ? '正在同步' : statusMeta.label }}</strong>
+            </div>
+            <span class="status-note">{{ statusMeta.note }}</span>
+          </div>
         </div>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 3 4.5 6v5.2c0 4.6 3.2 8.7 7.5 9.8 4.3-1.1 7.5-5.2 7.5-9.8V6L12 3Z" />
-          <path d="m8.8 12 2.1 2.1 4.4-4.5" />
-        </svg>
+        <div class="identity-visual" aria-hidden="true">
+          <span class="orbit orbit-one"></span>
+          <span class="orbit orbit-two"></span>
+          <div class="identity-chip">
+            <span class="chip-shine"></span>
+            <svg viewBox="0 0 48 48">
+              <path d="M24 5 9 11v10.5C9 30.7 15.4 38.8 24 41c8.6-2.2 15-10.3 15-19.5V11L24 5Z" />
+              <path d="m17.6 23.2 4.2 4.2 8.8-9" />
+            </svg>
+            <span>OMNI VERIFIED</span>
+            <small>SECURE ID · {{ certification.status.toUpperCase() }}</small>
+          </div>
+        </div>
       </section>
 
       <div v-if="certification.status === 'rejected'" class="reject-alert">
-        <strong>审核未通过</strong>
-        <p>{{ certification.reject_reason || '认证资料未通过审核，请检查后重新提交。' }}</p>
+        <span class="alert-mark">!</span>
+        <div>
+          <strong>资料需要调整</strong>
+          <p>{{ certification.reject_reason || '认证资料未通过审核，请检查后重新提交。' }}</p>
+        </div>
       </div>
 
-      <section v-if="canEdit" class="content-card form-card">
-        <div class="section-heading">
-          <div>
-            <h2>提交认证材料</h2>
-            <p>请确保填写的信息与证件内容完全一致</p>
-          </div>
-          <span>信息将被加密保存</span>
-        </div>
-
-        <div v-if="!authStore.user?.emailVerifiedAt" class="email-warning">
-          提交实名认证前，请先前往
-          <RouterLink to="/workspace/account">账户设置</RouterLink> 完成邮箱验证。
-        </div>
-
-        <form class="verification-form" @submit.prevent="submit">
-          <label class="field field-wide">
-            <span>真实姓名 <b>*</b><small>（与证件一致）</small></span>
-            <input
-              v-model="form.name"
-              type="text"
-              maxlength="100"
-              autocomplete="name"
-              placeholder="请填写证件上的姓名"
-              required
-            />
-          </label>
-
-          <label class="field field-wide">
-            <span>证件类型 <b>*</b></span>
-            <select v-model="form.id_type">
-              <option v-for="item in idTypeOptions" :key="item.value" :value="item.value">
-                {{ item.label }}
-              </option>
-            </select>
-          </label>
-
-          <label class="field field-wide">
-            <span>证件号码 <b>*</b></span>
-            <input
-              v-model="form.id_number"
-              type="text"
-              autocomplete="off"
-              placeholder="请输入证件号码"
-              required
-            />
-            <small class="privacy-tip">证件号码仅用于实名认证，提交后不会在页面回显</small>
-          </label>
-
-          <label class="field">
-            <span>地区 <small>（可选）</small></span>
-            <select v-model="form.nationality">
-              <option value="">-- 请选择 --</option>
-              <option v-for="item in countryOptions" :key="item[0]" :value="item[0]">
-                {{ item[1] }}
-              </option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span>出生日期 <small>（可选）</small></span>
-            <input v-model="form.dob" type="date" :max="maxDob" />
-          </label>
-
-          <fieldset class="upload-section field-wide">
-            <legend>证件照片上传</legend>
-            <div class="upload-grid">
-              <label
-                v-for="item in [
-                  ['id_image_front', '正面', true],
-                  ['id_image_back', '背面', false],
-                  ['selfie', '自拍', true],
-                ] as const"
-                :key="item[0]"
-                class="upload-field"
-              >
-                <span>{{ item[1] }} <b v-if="item[2]">*</b></span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  @change="handleFileChange(item[0], $event)"
-                />
-                <div class="upload-box" :class="{ uploaded: uploads[item[0]].url }">
-                  <img
-                    v-if="uploads[item[0]].preview"
-                    :src="uploads[item[0]].preview"
-                    alt="所选图片预览"
-                  />
-                  <template v-else>
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12 16V4m0 0L8 8m4-4 4 4M5 14v5h14v-5" />
-                    </svg>
-                    <strong>{{ uploads[item[0]].filename || '点击上传' }}</strong>
-                  </template>
-                  <span v-if="uploads[item[0]].uploading" class="upload-mask">上传中…</span>
-                  <span v-else-if="uploads[item[0]].url" class="uploaded-badge">✓ 已上传</span>
-                </div>
-              </label>
+      <div v-if="canEdit" class="verification-layout">
+        <aside class="process-panel">
+          <span class="panel-kicker">认证流程</span>
+          <h2>三步建立可信身份</h2>
+          <ol class="process-list">
+            <li class="active">
+              <span>01</span>
+              <div><strong>填写身份信息</strong><small>需与证件内容一致</small></div>
+            </li>
+            <li :class="{ active: uploads.id_image_front.url || uploads.selfie.url }">
+              <span>02</span>
+              <div><strong>上传证明材料</strong><small>清晰、完整、无遮挡</small></div>
+            </li>
+            <li :class="{ active: submitting }">
+              <span>03</span>
+              <div><strong>提交人工审核</strong><small>结果会同步到此页面</small></div>
+            </li>
+          </ol>
+          <div class="security-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="5" y="10" width="14" height="10" rx="3" />
+              <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2" />
+            </svg>
+            <div>
+              <strong>隐私安全承诺</strong>
+              <p>证件号码提交后不再回显，材料仅用于身份审核。</p>
             </div>
-            <p>支持 JPEG / PNG / WebP，每张不超过 5 MB。请保证证件完整、清晰、无遮挡。</p>
-          </fieldset>
+          </div>
+        </aside>
 
-          <button
-            class="submit-button"
-            type="submit"
-            :disabled="submitting || anyUploading || !authStore.user?.emailVerifiedAt"
-          >
-            {{
-              submitting
-                ? '提交中…'
-                : anyUploading
-                  ? '图片上传中…'
-                  : certification.status === 'rejected'
-                    ? '重新提交审核'
-                    : '提交审核'
-            }}
-          </button>
-        </form>
-      </section>
+        <section class="form-panel">
+          <div class="form-intro">
+            <div>
+              <span class="panel-kicker">{{
+                certification.status === 'rejected' ? '重新提交' : '开始认证'
+              }}</span>
+              <h2>个人认证资料</h2>
+              <p>带 <b>*</b> 的项目为必填项</p>
+            </div>
+            <span class="encrypted-badge">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3 5 6v5c0 4.3 2.9 8 7 9.2 4.1-1.2 7-4.9 7-9.2V6l-7-3Z" />
+              </svg>
+              端到端加密
+            </span>
+          </div>
 
-      <section v-else class="content-card submitted-card">
-        <div class="submitted-icon">{{ certification.status === 'verified' ? '✓' : '⌛' }}</div>
-        <h2>{{ certification.status === 'verified' ? '实名认证已完成' : '资料正在审核中' }}</h2>
+          <div v-if="!authStore.user?.emailVerifiedAt" class="email-warning">
+            <span>✦</span>
+            <p>
+              提交前需要完成邮箱验证。请前往
+              <RouterLink to="/workspace/account">账户设置</RouterLink> 验证邮箱。
+            </p>
+          </div>
+
+          <form class="verification-form" @submit.prevent="submit">
+            <section class="form-section">
+              <header class="form-section-title">
+                <span>01</span>
+                <div>
+                  <h3>基础身份</h3>
+                  <p>填写证件上真实、有效的信息</p>
+                </div>
+              </header>
+              <div class="fields-grid">
+                <label class="field field-wide">
+                  <span>真实姓名 <b>*</b></span>
+                  <div class="control">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="12" cy="8" r="3.5" />
+                      <path d="M5.5 20c.4-4 2.6-6 6.5-6s6.1 2 6.5 6" />
+                    </svg>
+                    <input
+                      v-model="form.name"
+                      type="text"
+                      maxlength="100"
+                      autocomplete="name"
+                      placeholder="填写与证件一致的姓名"
+                      required
+                    />
+                  </div>
+                </label>
+
+                <label class="field">
+                  <span>证件类型 <b>*</b></span>
+                  <div class="control">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="14" rx="3" />
+                      <circle cx="8" cy="11" r="2" />
+                      <path d="M13 10h5M13 14h4M6 16h4" />
+                    </svg>
+                    <select v-model="form.id_type">
+                      <option v-for="item in idTypeOptions" :key="item.value" :value="item.value">
+                        {{ item.label }}
+                      </option>
+                    </select>
+                  </div>
+                </label>
+
+                <label class="field">
+                  <span>证件号码 <b>*</b></span>
+                  <div class="control">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M7 4h10v16H7zM10 8h4M10 12h4M10 16h2" />
+                    </svg>
+                    <input
+                      v-model="form.id_number"
+                      type="text"
+                      autocomplete="off"
+                      placeholder="输入证件号码"
+                      required
+                    />
+                  </div>
+                  <small class="privacy-tip">提交后不会在页面回显</small>
+                </label>
+
+                <label class="field">
+                  <span>签发地区 <small>选填</small></span>
+                  <div class="control">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11Z" />
+                      <circle cx="12" cy="10" r="2" />
+                    </svg>
+                    <select v-model="form.nationality">
+                      <option value="">请选择地区</option>
+                      <option v-for="item in countryOptions" :key="item[0]" :value="item[0]">
+                        {{ item[1] }}
+                      </option>
+                    </select>
+                  </div>
+                </label>
+
+                <label class="field">
+                  <span>出生日期 <small>选填</small></span>
+                  <div class="control">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="3" y="5" width="18" height="16" rx="3" />
+                      <path d="M8 3v4M16 3v4M3 10h18" />
+                    </svg>
+                    <input v-model="form.dob" type="date" :max="maxDob" />
+                  </div>
+                </label>
+              </div>
+            </section>
+
+            <section class="form-section materials-section">
+              <header class="form-section-title">
+                <span>02</span>
+                <div>
+                  <h3>证明材料</h3>
+                  <p>支持 JPEG、PNG、WebP，单张不超过 5 MB</p>
+                </div>
+              </header>
+              <div class="upload-grid">
+                <label
+                  v-for="(item, index) in [
+                    ['id_image_front', '证件人像面', '包含照片与姓名', true],
+                    ['id_image_back', '证件国徽面', '展示有效期与签发机关', false],
+                    ['selfie', '本人自拍照', '正脸、光线充足、无遮挡', true],
+                  ] as const"
+                  :key="item[0]"
+                  class="upload-field"
+                >
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    @change="handleFileChange(item[0], $event)"
+                  />
+                  <div class="upload-card" :class="{ uploaded: uploads[item[0]].url }">
+                    <span class="upload-index">0{{ index + 1 }}</span>
+                    <img
+                      v-if="uploads[item[0]].preview"
+                      :src="uploads[item[0]].preview"
+                      alt="所选图片预览"
+                    />
+                    <div v-else class="upload-placeholder">
+                      <span class="upload-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path
+                            d="M12 16V5m0 0L8 9m4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"
+                          />
+                        </svg>
+                      </span>
+                      <strong>{{ item[1] }} <b v-if="item[3]">*</b></strong>
+                      <small>{{ item[2] }}</small>
+                      <em>{{ uploads[item[0]].filename || '选择图片' }}</em>
+                    </div>
+                    <span v-if="uploads[item[0]].uploading" class="upload-mask">正在安全上传…</span>
+                    <span v-else-if="uploads[item[0]].url" class="uploaded-badge">✓ 已就绪</span>
+                  </div>
+                </label>
+              </div>
+              <p class="material-tip">
+                <span>拍摄建议</span> 将证件四角完整放入画面，避免反光、模糊或后期修图。
+              </p>
+            </section>
+
+            <div class="submit-bar">
+              <div>
+                <strong>准备好了吗？</strong
+                ><small>提交后将进入人工审核，审核期间无法修改资料。</small>
+              </div>
+              <button
+                class="submit-button"
+                type="submit"
+                :disabled="submitting || anyUploading || !authStore.user?.emailVerifiedAt"
+              >
+                <span>{{
+                  submitting
+                    ? '提交中…'
+                    : anyUploading
+                      ? '图片上传中…'
+                      : certification.status === 'rejected'
+                        ? '重新提交'
+                        : '确认并提交'
+                }}</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <section v-else class="result-panel" :class="`result-${certification.status}`">
+        <div class="result-graphic">
+          <span></span>
+          <div>{{ certification.status === 'verified' ? '✓' : '⌛' }}</div>
+        </div>
+        <span class="panel-kicker">{{
+          certification.status === 'verified' ? 'VERIFICATION COMPLETE' : 'REVIEW IN PROGRESS'
+        }}</span>
+        <h2>{{ certification.status === 'verified' ? '身份认证已完成' : '资料已进入审核队列' }}</h2>
         <p>
           {{
             certification.status === 'verified'
-              ? '你已通过个人实名认证，可以使用需要实名身份的功能。'
-              : '审核完成后会更新此页面状态，请勿重复提交认证材料。'
+              ? '你的可信身份已经建立，现在可以使用需要实名认证的平台能力。'
+              : '我们正在核验你的信息，审核完成后此处会自动更新，请勿重复提交。'
           }}
         </p>
         <dl v-if="certification.name">
@@ -446,7 +577,9 @@ onBeforeUnmount(() => {
             <dd>{{ new Date(certification.created_at).toLocaleString('zh-CN') }}</dd>
           </div>
         </dl>
-        <button type="button" class="refresh-button" @click="loadCertification">刷新状态</button>
+        <button type="button" class="refresh-button" @click="loadCertification">
+          刷新认证状态
+        </button>
       </section>
     </main>
   </div>
@@ -638,206 +771,526 @@ onBeforeUnmount(() => {
   font-style: normal;
 }
 .workspace-main {
-  width: min(920px, calc(100% - 330px));
-  padding: 112px 0 70px;
-  margin-left: max(300px, calc(50% - 310px));
+  width: min(1080px, calc(100% - 328px));
+  padding: 104px 0 80px;
+  margin-left: max(296px, calc(50% - 400px));
   transition: opacity 0.2s;
 }
 .workspace-main.loading {
   opacity: 0.62;
 }
 .breadcrumb {
-  color: #5454ef;
-  font-size: 13px;
-}
-.breadcrumb span {
-  margin-left: 6px;
-  color: #9badcc;
-}
-h1 {
-  margin: 24px 0 28px;
-  font-size: 32px;
-  letter-spacing: -0.04em;
-}
-.content-card {
-  padding: 34px 36px;
-  margin-bottom: 28px;
-  border: 1px solid #dfe6f0;
-  border-radius: 20px;
-  background: #fff;
-  box-shadow: 0 2px 4px rgb(31 44 75 / 3%);
-}
-.content-card h2 {
-  margin: 0;
-  font-size: 18px;
-}
-.status-card {
   display: flex;
-  min-height: 150px;
-  align-items: center;
-  justify-content: space-between;
-}
-.status-card h2 {
-  margin-bottom: 20px;
-}
-.status-card p {
-  margin: 8px 0 0;
-  color: #8293b0;
-  font-size: 13px;
-}
-.status-card > svg {
-  width: 58px;
-  height: 58px;
-  fill: none;
-  stroke: #c8d0e0;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.5;
-}
-.status-value {
-  display: inline-flex;
-  align-items: center;
   gap: 9px;
-  color: #8da0c3;
-  font-size: 18px;
+  align-items: center;
+  margin-bottom: 22px;
+  color: #8a96af;
+  font-size: 12px;
 }
-.status-value i {
+.breadcrumb a {
+  color: #5d58dc;
+  font-weight: 650;
+}
+.identity-hero {
+  position: relative;
+  display: grid;
+  min-height: 340px;
+  overflow: hidden;
+  grid-template-columns: 1.15fr 0.85fr;
+  padding: 48px 54px;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 78% 20%, rgb(119 107 255 / 45%), transparent 27%),
+    radial-gradient(circle at 92% 90%, rgb(86 225 191 / 22%), transparent 30%),
+    linear-gradient(135deg, #11152b 0%, #1b2040 55%, #252352 100%);
+  box-shadow: 0 30px 70px rgb(19 25 60 / 22%);
+  color: #fff;
+}
+.identity-hero::before {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 4%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 4%) 1px, transparent 1px);
+  background-size: 34px 34px;
+  content: '';
+  mask-image: linear-gradient(to right, #000, transparent 75%);
+}
+.hero-copy {
+  position: relative;
+  z-index: 2;
+}
+.eyebrow,
+.panel-kicker {
+  display: inline-block;
+  color: #8c82ff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+.identity-hero .eyebrow {
+  color: #8df0d7;
+}
+.identity-hero h1 {
+  margin: 15px 0 14px;
+  font-size: clamp(34px, 4vw, 52px);
+  line-height: 1.08;
+  letter-spacing: -0.055em;
+}
+.identity-hero h1 em {
+  color: #a89fff;
+  font-style: normal;
+}
+.identity-hero .hero-copy > p {
+  max-width: 480px;
+  margin: 0;
+  color: #aeb7d0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.hero-status {
+  display: grid;
+  width: min(455px, 100%);
+  grid-template-columns: auto auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 18px;
+  margin-top: 30px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 16px;
+  background: rgb(255 255 255 / 7%);
+  backdrop-filter: blur(12px);
+}
+.status-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: currentcolor;
+  background: #a89fff;
+  box-shadow: 0 0 0 5px rgb(168 159 255 / 12%);
 }
-.status-pending .status-value {
-  color: #e29a00;
+.hero-status > div {
+  display: grid;
+  gap: 2px;
 }
-.status-pending > svg {
-  stroke: #e9b23c;
+.hero-status small {
+  color: #8490ad;
+  font-size: 9px;
+  letter-spacing: 0.08em;
 }
-.status-verified .status-value {
-  color: #13a262;
+.hero-status strong {
+  font-size: 14px;
 }
-.status-verified > svg {
-  stroke: #13a262;
+.status-note {
+  overflow: hidden;
+  color: #9da8c2;
+  font-size: 11px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.status-rejected .status-value {
-  color: #e65038;
+.status-pending .status-dot {
+  background: #f4c96b;
+  box-shadow: 0 0 0 5px rgb(244 201 107 / 12%);
 }
-.status-rejected > svg {
-  stroke: #e65038;
+.status-verified .status-dot {
+  background: #72e7c5;
+  box-shadow: 0 0 0 5px rgb(114 231 197 / 12%);
 }
-.reject-alert,
-.email-warning {
-  padding: 18px 20px;
-  margin-bottom: 22px;
-  border: 1px solid #f3b3a8;
-  border-radius: 12px;
+.status-rejected .status-dot {
+  background: #ff8d8d;
+  box-shadow: 0 0 0 5px rgb(255 141 141 / 12%);
+}
+.identity-visual {
+  position: relative;
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+}
+.orbit {
+  position: absolute;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 50%;
+}
+.orbit-one {
+  width: 290px;
+  height: 290px;
+}
+.orbit-two {
+  width: 210px;
+  height: 210px;
+  border-style: dashed;
+  animation: orbit-spin 24s linear infinite;
+}
+.identity-chip {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 210px;
+  height: 258px;
+  overflow: hidden;
+  justify-items: center;
+  align-content: center;
+  gap: 13px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 26px;
+  background: linear-gradient(145deg, rgb(255 255 255 / 18%), rgb(255 255 255 / 5%));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 25%),
+    0 28px 50px rgb(5 9 30 / 38%);
+  backdrop-filter: blur(16px);
+  transform: rotate(5deg);
+}
+.chip-shine {
+  position: absolute;
+  top: -30%;
+  left: -55%;
+  width: 75%;
+  height: 170%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 12%), transparent);
+  transform: rotate(25deg);
+}
+.identity-chip svg {
+  width: 75px;
+  height: 75px;
+  fill: rgb(119 107 255 / 16%);
+  stroke: #8df0d7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+.identity-chip > span:not(.chip-shine) {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+.identity-chip small {
+  color: #8f9bb6;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+.reject-alert {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 22px;
+  margin-top: 22px;
+  border: 1px solid #ffd0ca;
+  border-radius: 18px;
   background: #fff6f4;
-  color: #c83e29;
+  color: #b93f31;
+}
+.alert-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffe4df;
+  font-weight: 800;
 }
 .reject-alert p {
-  margin: 7px 0 0;
-  font-size: 13px;
+  margin: 5px 0 0;
+  color: #b6665c;
+  font-size: 12px;
 }
-.section-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 28px;
+.verification-layout {
+  display: grid;
+  grid-template-columns: 265px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 28px;
 }
-.section-heading h2 {
-  margin-bottom: 8px;
+.process-panel {
+  position: sticky;
+  top: 94px;
+  padding: 28px 24px;
+  border: 1px solid #e4e8f2;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 14px 40px rgb(29 39 80 / 6%);
 }
-.section-heading p {
+.process-panel h2 {
+  margin: 8px 0 27px;
+  font-size: 21px;
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+}
+.process-list {
+  position: relative;
+  display: grid;
+  gap: 24px;
+  padding: 0;
   margin: 0;
-  color: #8293b0;
+  list-style: none;
+}
+.process-list::before {
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 18px;
+  width: 1px;
+  background: #e6e9f0;
+  content: '';
+}
+.process-list li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 13px;
+  align-items: center;
+}
+.process-list li > span {
+  z-index: 1;
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #e2e6ef;
+  border-radius: 50%;
+  background: #fff;
+  color: #9aa5ba;
+  font-size: 10px;
+  font-weight: 800;
+}
+.process-list li.active > span {
+  border-color: #776bff;
+  background: #776bff;
+  box-shadow: 0 8px 18px rgb(119 107 255 / 25%);
+  color: #fff;
+}
+.process-list li > div {
+  display: grid;
+  gap: 4px;
+}
+.process-list strong {
+  color: #28304a;
   font-size: 13px;
 }
-.section-heading > span {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eef8f4;
-  color: #17966a;
+.process-list small {
+  color: #99a3b6;
+  font-size: 10px;
+}
+.security-note {
+  display: flex;
+  gap: 11px;
+  padding: 16px;
+  margin-top: 28px;
+  border-radius: 16px;
+  background: #f2fbf8;
+}
+.security-note svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: #35ad8a;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+.security-note strong {
+  color: #258c70;
   font-size: 11px;
 }
+.security-note p {
+  margin: 5px 0 0;
+  color: #6b9489;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.form-panel {
+  overflow: hidden;
+  border: 1px solid #e4e8f2;
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgb(29 39 80 / 8%);
+}
+.form-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 31px 36px 27px;
+  border-bottom: 1px solid #edf0f5;
+}
+.form-intro h2 {
+  margin: 7px 0 4px;
+  font-size: 25px;
+  letter-spacing: -0.04em;
+}
+.form-intro p {
+  margin: 0;
+  color: #9aa4b7;
+  font-size: 11px;
+}
+.form-intro p b,
+.field b,
+.upload-placeholder b {
+  color: #f06c5d;
+}
+.encrypted-badge {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: #f0faf7;
+  color: #289879;
+  font-size: 10px;
+  font-weight: 650;
+}
+.encrypted-badge svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+}
 .email-warning {
-  margin: 0 0 24px;
-  border-color: #f1cf7d;
-  background: #fff9e9;
-  color: #ad6500;
-  font-size: 13px;
+  display: flex;
+  gap: 11px;
+  align-items: center;
+  padding: 15px 18px;
+  margin: 24px 36px 0;
+  border: 1px solid #f0dda5;
+  border-radius: 14px;
+  background: #fffaeb;
+  color: #8e6a14;
+  font-size: 11px;
+}
+.email-warning > span {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff1c7;
+}
+.email-warning p {
+  margin: 0;
 }
 .email-warning a {
-  font-weight: 700;
-  text-decoration: underline;
+  color: #6b51d9;
+  font-weight: 750;
 }
 .verification-form {
   display: grid;
+}
+.form-section {
+  padding: 32px 36px 36px;
+  border-bottom: 1px solid #edf0f5;
+}
+.form-section-title {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 25px;
+}
+.form-section-title > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  background: #f0efff;
+  color: #6d62ef;
+  font-size: 10px;
+  font-weight: 800;
+}
+.form-section-title h3 {
+  margin: 0;
+  color: #232b43;
+  font-size: 15px;
+}
+.form-section-title p {
+  margin: 4px 0 0;
+  color: #9aa4b7;
+  font-size: 10px;
+}
+.fields-grid {
+  display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 23px;
+  gap: 20px;
 }
 .field {
   display: grid;
   min-width: 0;
-  gap: 9px;
-  color: #61779b;
-  font-size: 14px;
+  gap: 8px;
+  color: #596781;
+  font-size: 11px;
+  font-weight: 650;
 }
 .field-wide {
   grid-column: 1 / -1;
 }
-.field b,
-.upload-field b {
-  color: #e4513b;
+.field > span small {
+  padding: 3px 7px;
+  margin-left: 4px;
+  border-radius: 999px;
+  background: #f1f3f7;
+  color: #9aa4b7;
+  font-size: 8px;
+  font-weight: 650;
 }
-.field small {
-  color: #9aa8c1;
+.control {
+  position: relative;
+}
+.control > svg {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 15px;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #a6afc0;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.55;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.control input,
+.control select {
+  width: 100%;
+  height: 52px;
+  padding: 0 16px 0 44px;
+  border: 1px solid #e0e4ed;
+  border-radius: 13px;
+  outline: 0;
+  background: #fafbfc;
+  color: #222a42;
+  font-size: 12px;
+  transition:
+    border-color 0.18s,
+    box-shadow 0.18s,
+    background 0.18s;
+}
+.control input:focus,
+.control select:focus {
+  border-color: #8176f4;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgb(119 107 255 / 10%);
+}
+.control input::placeholder {
+  color: #abb4c5;
+}
+.privacy-tip {
+  color: #a0a9ba;
+  font-size: 9px;
   font-weight: 400;
 }
-.field input,
-.field select {
-  width: 100%;
-  height: 54px;
-  padding: 0 18px;
-  border: 1px solid #dbe3ef;
-  border-radius: 10px;
-  outline: 0;
-  background: #fff;
-  color: #1b2945;
-}
-.field input:focus,
-.field select:focus {
-  border-color: #5a56ee;
-  box-shadow: 0 0 0 3px rgb(90 86 238 / 10%);
-}
-.field input::placeholder {
-  color: #a5b3ce;
-}
-.field .privacy-tip {
-  margin-top: -2px;
-  color: #9aa8c1;
-  font-size: 11px;
-}
-.upload-section {
-  padding: 0;
-  margin: 4px 0 0;
-  border: 0;
-}
-.upload-section legend {
-  padding: 0;
-  margin-bottom: 16px;
-  color: #61779b;
-  font-size: 14px;
+.materials-section {
+  background: #fbfcfe;
 }
 .upload-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  gap: 14px;
 }
 .upload-field {
-  display: grid;
-  gap: 9px;
-  color: #7285a6;
-  font-size: 13px;
+  min-width: 0;
   cursor: pointer;
 }
 .upload-field > input {
@@ -846,138 +1299,298 @@ h1 {
   height: 1px;
   opacity: 0;
 }
-.upload-box {
+.upload-card {
   position: relative;
-  display: grid;
-  height: 155px;
+  height: 214px;
   overflow: hidden;
+  border: 1px solid #dfe4ee;
+  border-radius: 18px;
+  background: #fff;
+  transition:
+    transform 0.18s,
+    border-color 0.18s,
+    box-shadow 0.18s;
+}
+.upload-card:hover {
+  border-color: #8c81f4;
+  box-shadow: 0 14px 30px rgb(50 47 110 / 10%);
+  transform: translateY(-3px);
+}
+.upload-index {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  width: 28px;
+  height: 28px;
   place-items: center;
-  align-content: center;
-  gap: 8px;
-  border: 2px dashed #cdd7e7;
-  border-radius: 12px;
-  background: #fbfcfe;
-  color: #7083a6;
+  border: 1px solid #e7e9ef;
+  border-radius: 9px;
+  background: rgb(255 255 255 / 92%);
+  color: #8b94a6;
+  font-size: 9px;
+  font-weight: 800;
+  backdrop-filter: blur(8px);
 }
-.upload-box:hover {
-  border-color: #716ef0;
-  background: #f8f8ff;
-  color: #5754e8;
-}
-.upload-box svg {
-  width: 31px;
-  height: 31px;
-  fill: none;
-  stroke: currentcolor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.7;
-}
-.upload-box strong {
-  font-size: 13px;
-  font-weight: 500;
-}
-.upload-box img {
+.upload-card > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+.upload-placeholder {
+  display: grid;
+  height: 100%;
+  justify-items: center;
+  align-content: center;
+  padding: 34px 14px 18px;
+  text-align: center;
+}
+.upload-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 15px;
+  background: #f0efff;
+  color: #7065ef;
+}
+.upload-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+}
+.upload-placeholder strong {
+  color: #30384e;
+  font-size: 12px;
+}
+.upload-placeholder small {
+  margin-top: 5px;
+  color: #a1aabc;
+  font-size: 9px;
+  line-height: 1.5;
+}
+.upload-placeholder em {
+  padding: 6px 10px;
+  margin-top: 13px;
+  border-radius: 8px;
+  background: #f5f6f9;
+  color: #7369e7;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 700;
+}
 .upload-mask {
   position: absolute;
+  z-index: 4;
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgb(22 31 55 / 60%);
-  color: #fff;
-}
-.uploaded-badge {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #17a36f;
+  background: rgb(25 29 51 / 72%);
   color: #fff;
   font-size: 11px;
 }
-.upload-section > p {
-  margin: 13px 0 0;
-  color: #8293b0;
+.uploaded-badge {
+  position: absolute;
+  z-index: 4;
+  right: 10px;
+  bottom: 10px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #2eb68f;
+  box-shadow: 0 7px 16px rgb(25 126 98 / 25%);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+}
+.material-tip {
+  padding: 12px 14px;
+  margin: 16px 0 0;
+  border-radius: 11px;
+  background: #f2f4f8;
+  color: #8b95a8;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.material-tip span {
+  padding: 3px 7px;
+  margin-right: 7px;
+  border-radius: 6px;
+  background: #fff;
+  color: #5e6780;
+  font-weight: 750;
+}
+.submit-bar {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 36px;
+}
+.submit-bar > div {
+  display: grid;
+  gap: 4px;
+}
+.submit-bar strong {
+  color: #2c344b;
   font-size: 12px;
 }
+.submit-bar small {
+  color: #9aa4b7;
+  font-size: 9px;
+}
 .submit-button {
-  grid-column: 1 / -1;
-  width: fit-content;
-  min-width: 128px;
+  display: inline-flex;
+  min-width: 150px;
   height: 48px;
-  padding: 0 26px;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 0 20px;
   border: 0;
-  border-radius: 10px;
-  background: #554ff5;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #7569f5, #5a50da);
+  box-shadow: 0 12px 24px rgb(96 82 220 / 24%);
   color: #fff;
-  font-weight: 650;
   cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+}
+.submit-button svg {
+  width: 17px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 .submit-button:hover {
-  background: #4843df;
+  box-shadow: 0 15px 30px rgb(96 82 220 / 32%);
+  transform: translateY(-1px);
 }
 .submit-button:disabled {
-  opacity: 0.6;
+  box-shadow: none;
   cursor: not-allowed;
+  filter: grayscale(0.25);
+  opacity: 0.55;
+  transform: none;
 }
-.submitted-card {
+.result-panel {
   display: grid;
+  min-height: 470px;
   justify-items: center;
-  padding: 52px 36px;
+  align-content: center;
+  padding: 55px;
+  margin-top: 28px;
+  border: 1px solid #e3e7f0;
+  border-radius: 28px;
+  background: radial-gradient(circle at 50% 20%, rgb(119 107 255 / 10%), transparent 30%), #fff;
+  box-shadow: 0 20px 60px rgb(29 39 80 / 8%);
   text-align: center;
 }
-.submitted-icon {
+.result-graphic {
+  position: relative;
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: 104px;
+  height: 104px;
   place-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 26px;
+}
+.result-graphic > span {
+  position: absolute;
+  inset: 0;
+  border: 1px dashed #b4acee;
   border-radius: 50%;
-  background: #eff1ff;
-  color: #5753ef;
-  font-size: 26px;
+  animation: orbit-spin 18s linear infinite;
 }
-.submitted-card h2 {
-  margin-bottom: 10px;
+.result-graphic > div {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 24px;
+  background: linear-gradient(145deg, #8175f7, #5d54d6);
+  box-shadow: 0 16px 30px rgb(93 84 214 / 28%);
+  color: #fff;
+  font-size: 28px;
 }
-.submitted-card > p {
+.result-verified .result-graphic > div {
+  background: linear-gradient(145deg, #4bd0ad, #25a982);
+  box-shadow: 0 16px 30px rgb(37 169 130 / 25%);
+}
+.result-panel h2 {
+  margin: 9px 0 10px;
+  color: #252d45;
+  font-size: 27px;
+  letter-spacing: -0.04em;
+}
+.result-panel > p {
   max-width: 520px;
   margin: 0;
-  color: #7385a5;
-  font-size: 13px;
+  color: #8893a8;
+  font-size: 12px;
   line-height: 1.8;
 }
-.submitted-card dl {
-  width: min(500px, 100%);
-  padding-top: 18px;
+.result-panel dl {
+  width: min(520px, 100%);
+  padding: 16px 20px;
   margin: 28px 0 0;
-  border-top: 1px solid #edf0f5;
+  border-radius: 16px;
+  background: #f7f8fb;
 }
-.submitted-card dl div {
+.result-panel dl div {
   display: flex;
   justify-content: space-between;
   padding: 8px 0;
-  font-size: 13px;
+  font-size: 11px;
 }
-.submitted-card dt {
-  color: #91a3c7;
+.result-panel dt {
+  color: #929caf;
 }
-.submitted-card dd {
+.result-panel dd {
   margin: 0;
+  color: #30384f;
+  font-weight: 650;
 }
 .refresh-button {
-  padding: 10px 18px;
-  margin-top: 24px;
-  border: 1px solid #d7ddec;
-  border-radius: 9px;
+  padding: 10px 16px;
+  margin-top: 22px;
+  border: 1px solid #dfe3ec;
+  border-radius: 10px;
   background: #fff;
-  color: #5454e9;
+  color: #655be0;
   cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 1150px) {
+  .workspace-main {
+    width: min(820px, calc(100% - 310px));
+    margin-left: 286px;
+  }
+  .identity-hero {
+    grid-template-columns: 1fr 0.72fr;
+    padding: 42px;
+  }
+  .verification-layout {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+  .upload-card {
+    height: 180px;
+  }
 }
 @media (max-width: 900px) {
   .top-nav,
@@ -996,8 +1609,33 @@ h1 {
     transform: translateX(0);
   }
   .workspace-main {
-    width: min(100% - 32px, 720px);
+    width: min(100% - 32px, 760px);
     margin: 0 auto;
+  }
+  .verification-layout {
+    grid-template-columns: 1fr;
+  }
+  .process-panel {
+    position: static;
+  }
+  .process-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .process-list::before {
+    top: 19px;
+    right: 16%;
+    bottom: auto;
+    left: 16%;
+    width: auto;
+    height: 1px;
+  }
+  .process-list li {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  .security-note {
+    display: none;
   }
 }
 @media (max-width: 620px) {
@@ -1005,39 +1643,117 @@ h1 {
     height: 62px;
     padding: 0 17px;
   }
+  .brand {
+    width: auto;
+  }
   .workspace-main {
-    padding-top: 94px;
+    width: calc(100% - 24px);
+    padding-top: 84px;
   }
-  .content-card {
-    padding: 25px 20px;
-    border-radius: 15px;
+  .breadcrumb {
+    margin-left: 4px;
   }
-  .verification-form {
+  .identity-hero {
+    min-height: 440px;
+    grid-template-columns: 1fr;
+    padding: 32px 26px;
+    border-radius: 24px;
+  }
+  .identity-hero h1 {
+    font-size: 35px;
+  }
+  .identity-visual {
+    position: absolute;
+    right: -72px;
+    bottom: -115px;
+    width: 270px;
+    opacity: 0.5;
+  }
+  .identity-chip {
+    width: 165px;
+    height: 205px;
+  }
+  .hero-copy > p {
+    max-width: 280px;
+  }
+  .hero-status {
+    grid-template-columns: auto auto;
+  }
+  .status-note {
+    display: none;
+  }
+  .verification-layout {
+    margin-top: 18px;
+  }
+  .process-panel {
+    padding: 24px 18px;
+    border-radius: 20px;
+  }
+  .process-panel h2 {
+    margin-bottom: 22px;
+    font-size: 19px;
+  }
+  .process-list small {
+    display: none;
+  }
+  .process-list strong {
+    font-size: 10px;
+  }
+  .form-panel {
+    border-radius: 22px;
+  }
+  .form-intro,
+  .form-section,
+  .submit-bar {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+  .form-intro {
+    align-items: flex-start;
+  }
+  .form-intro h2 {
+    font-size: 22px;
+  }
+  .encrypted-badge {
+    padding: 7px;
+    font-size: 0;
+  }
+  .encrypted-badge svg {
+    width: 16px;
+    height: 16px;
+  }
+  .email-warning {
+    margin-right: 20px;
+    margin-left: 20px;
+  }
+  .fields-grid {
     grid-template-columns: 1fr;
   }
   .field-wide {
     grid-column: auto;
   }
-  .upload-section {
-    grid-column: auto;
-  }
   .upload-grid {
     grid-template-columns: 1fr;
   }
-  .upload-box {
-    height: 175px;
+  .upload-card {
+    height: 205px;
   }
-  .section-heading {
-    gap: 15px;
+  .submit-bar {
+    align-items: stretch;
+    flex-direction: column;
   }
-  .section-heading > span {
-    display: none;
+  .submit-button {
+    width: 100%;
   }
-  .brand {
-    width: auto;
+  .result-panel {
+    padding: 40px 22px;
+    border-radius: 22px;
   }
-  h1 {
-    font-size: 28px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-two,
+  .result-graphic > span {
+    animation: none;
   }
 }
 </style>
