@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
+import SiteHeader from '@/components/SiteHeader.vue'
 
 const authStore = useAuthStore()
 const providers = [
@@ -38,28 +39,7 @@ const models = [
 
 <template>
   <div class="landing">
-    <header class="topbar">
-      <RouterLink class="brand" to="/"
-        ><span class="brand-mark">O</span><span>OmniMind</span></RouterLink
-      >
-      <nav class="nav" aria-label="主导航">
-        <a href="#models">模型</a><a href="#features">能力</a><a href="#quickstart">接入</a
-        ><a href="#pricing">价格</a><a href="#docs">文档</a>
-      </nav>
-      <div class="header-actions">
-        <button class="icon-button" type="button" aria-label="切换主题">☾</button>
-        <template v-if="!authStore.isAuthenticated"
-          ><RouterLink class="login-link" to="/login">登录</RouterLink
-          ><RouterLink class="register-link" to="/register">免费注册</RouterLink></template
-        >
-        <template v-else
-          ><span class="user-name">{{ authStore.user?.displayName || authStore.user?.email }}</span
-          ><button class="login-link plain-button" type="button" @click="authStore.logout">
-            退出
-          </button></template
-        >
-      </div>
-    </header>
+    <SiteHeader />
 
     <main>
       <section class="hero">
@@ -200,6 +180,7 @@ response = client.chat.completions.create(
 .landing {
   min-height: 100vh;
   overflow: hidden;
+  padding-top: 72px;
   color: #17182d;
   background: #fff;
 }
@@ -800,6 +781,9 @@ pre {
   }
 }
 @media (max-width: 600px) {
+  .landing {
+    padding-top: 64px;
+  }
   .topbar {
     height: 64px;
     padding-inline: 17px;

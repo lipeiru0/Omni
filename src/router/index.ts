@@ -14,9 +14,21 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { path: '/', name: 'home', component: () => import('@/views/Home/index.vue') },
+    { path: '/models', name: 'models', component: () => import('@/views/Models/index.vue') },
+    {
+      path: '/models/:modelId(.*)',
+      name: 'model-detail',
+      component: () => import('@/views/ModelDetail/index.vue'),
+    },
     {
       path: '/workspace',
-      redirect: { name: 'workspace-account' },
+      redirect: { name: 'workspace-overview' },
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/workspace/overview',
+      name: 'workspace-overview',
+      component: () => import('@/views/WorkspaceOverview/index.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -26,9 +38,21 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/workspace/wallet',
+      name: 'workspace-wallet',
+      component: () => import('@/views/WorkspaceWallet/index.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/workspace/verification',
       name: 'workspace-verification',
       component: () => import('@/views/WorkspaceVerification/index.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/workspace/plans',
+      name: 'workspace-plans',
+      component: () => import('@/views/WorkspacePlans/index.vue'),
       meta: { requiresAuth: true },
     },
     {

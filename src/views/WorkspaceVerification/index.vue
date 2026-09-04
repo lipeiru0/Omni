@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 import {
   getPersonalCertification,
@@ -9,6 +8,7 @@ import {
   uploadCertificationImage,
 } from '@/api/certifications'
 import { getErrorMessage } from '@/api/errors'
+import SiteHeader from '@/components/SiteHeader.vue'
 import { useAuthStore } from '@/stores/auth'
 import type {
   CertificationStatus,
@@ -27,11 +27,9 @@ interface UploadSlot {
 }
 
 const authStore = useAuthStore()
-const router = useRouter()
 const loading = ref(true)
 const submitting = ref(false)
 const mobileMenuOpen = ref(false)
-const accountMenuOpen = ref(false)
 const certification = ref<PersonalCertification>({ status: 'unverified' })
 
 const form = reactive({
@@ -54,7 +52,6 @@ const primaryNav = [
   ['▧', '素材库'],
   ['▣', '钱包'],
   ['⌗', '用量'],
-  ['◇', '我的套餐'],
   ['◴', '限流状态'],
   ['⌘', '路由设置'],
   ['↶', '退款'],
@@ -195,23 +192,11 @@ async function submit(): Promise<void> {
   }
 }
 
-async function logout(): Promise<void> {
-  accountMenuOpen.value = false
-  await authStore.logoutFromServer()
-  await router.replace('/login')
-}
-
-function closeMenus(): void {
-  accountMenuOpen.value = false
-}
-
 onMounted(() => {
-  document.addEventListener('click', closeMenus)
   void loadCertification()
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', closeMenus)
   Object.values(uploads).forEach((item) => {
     if (item.preview.startsWith('blob:')) URL.revokeObjectURL(item.preview)
   })
@@ -220,44 +205,21 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="workspace-shell">
-    <header class="workspace-header">
-      <RouterLink class="brand" to="/">
-        <span class="brand-mark">O</span><strong>OmniMind</strong>
-      </RouterLink>
-      <nav class="top-nav" aria-label="顶部导航">
-        <a href="#">套餐</a><a href="#">模型</a><a href="#">体验</a>
-        <RouterLink class="active" to="/workspace">工作台</RouterLink>
-        <a href="#">文档</a><a href="#">合作</a>
-      </nav>
-      <div class="header-tools">
-        <button type="button" aria-label="切换主题">☾</button>
-        <button type="button">◎ UTC+8</button><button type="button">中</button
-        ><button type="button">♧</button>
-        <div class="account-menu" @click.stop>
-          <button class="avatar" type="button" @click="accountMenuOpen = !accountMenuOpen">
-            {{ authStore.user?.email?.slice(0, 1).toUpperCase() || 'O' }}
-          </button>
-          <div v-if="accountMenuOpen" class="account-dropdown">
-            <div class="account-email">{{ authStore.user?.email || '未知账号' }}</div>
-            <RouterLink class="account-dropdown-item" to="/workspace/account">账号设置</RouterLink>
-            <button class="account-dropdown-item logout-item" type="button" @click="logout">
-              退出登录
-            </button>
-          </div>
-        </div>
-      </div>
-      <button class="menu-button" type="button" @click="mobileMenuOpen = !mobileMenuOpen">
-        ☰
-      </button>
-    </header>
+    <SiteHeader show-mobile-menu @toggle-menu="mobileMenuOpen = !mobileMenuOpen" />
 
     <aside class="sidebar" :class="{ open: mobileMenuOpen }">
       <div class="sidebar-scroll">
         <p class="nav-heading">开发</p>
-        <button v-for="item in primaryNav" :key="item[1]" type="button" class="side-item">
-          <span>{{ item[0] }}</span
-          >{{ item[1] }}
-        </button>
+        <template v-for="item in primaryNav" :key="item[1]">
+          <RouterLink v-if="item[1] === '概览'" class="side-item" to="/workspace/overview">
+            <span>{{ item[0] }}</span
+            >{{ item[1] }}
+          </RouterLink>
+          <button v-else type="button" class="side-item">
+            <span>{{ item[0] }}</span
+            >{{ item[1] }}
+          </button>
+        </template>
         <div class="nav-divider"></div>
         <p class="nav-heading">账号</p>
         <RouterLink class="side-item" to="/workspace/account"><span>◎</span>账户</RouterLink>
@@ -548,6 +510,45 @@ onBeforeUnmount(() => {
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.plan-menu-item {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 13px 14px;
+  margin: 8px;
+  border-radius: 9px;
+  background: #f1f0ff;
+  color: #37348e;
+}
+.plan-menu-item:hover {
+  background: #e9e7ff;
+}
+.plan-menu-icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 9px;
+  background: #5957e8;
+  color: #fff;
+}
+.plan-menu-item > span:nth-child(2) {
+  display: grid;
+  gap: 3px;
+}
+.plan-menu-item strong {
+  font-size: 13px;
+}
+.plan-menu-item small {
+  color: #7775ae;
+  font-size: 10px;
+  font-weight: 400;
+}
+.plan-menu-item b {
+  font-size: 20px;
+  font-weight: 400;
 }
 .account-dropdown-item {
   display: flex;
